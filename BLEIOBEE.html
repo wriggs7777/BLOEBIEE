@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BLEIOBEE V3.7 | Prestige Glass</title>
+    <style>
+        :root { 
+            --glass: rgba(255, 255, 255, 0.4);
+            --accent: #d4af37; 
+            --border: rgba(255, 255, 255, 0.5);
+            --text: #111; 
+        }
+        body { 
+            margin: 0; 
+            background: #e0e0e0; 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            display: flex; height: 100vh; overflow: hidden; font-size: 11px; 
+        }
+        
+        aside { 
+            width: 360px; 
+            background: var(--glass);
+            backdrop-filter: blur(25px) saturate(150%);
+            -webkit-backdrop-filter: blur(25px) saturate(150%);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; 
+            overflow-y: overlay; z-index: 100; 
+            box-shadow: 10px 0 40px rgba(0,0,0,0.1);
+        }
+        aside::-webkit-scrollbar { width: 4px; }
+        aside::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .header { 
+            padding: 25px; 
+            border-bottom: 1px solid var(--accent); 
+            background: rgba(255,255,255,0.2);
+            text-align: center;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .header h1 { font-size: 15px; letter-spacing: 6px; margin: 0; color: #000; font-weight: 900; }
+        
+        .section-head { 
+            background: rgba(0,0,0,0.05); 
+            padding: 10px 20px; 
+            color: #333; 
+            text-transform: uppercase; font-weight: 800; font-size: 9px; 
+            margin-top: 5px; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .controls { padding: 15px 20px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        
+        .row { display: flex; justify-content: space-between; font-size: 10px; color: #222; align-items: center; font-weight: 600; }
+        .val { color: var(--accent); font-family: monospace; font-weight: bold; background: rgba(255,255,255,0.5); padding: 1px 4px; border-radius: 3px; }
+        
+        input[type=range] { width: 100%; accent-color: var(--accent); height: 3px; -webkit-appearance: none; background: rgba(0,0,0,0.1); border-radius: 5px; margin-top: 5px; }
+        select, button { 
+            background: rgba(255,255,255,0.8); color: #000; border: 1px solid var(--border); 
+            padding: 6px; font-size: 10px; border-radius: 4px; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: #000; color: #fff; }
+        
+        .rec-btn { background: #000; color: gold; font-weight: 900; padding: 12px; border: 1px solid gold; margin-top: 10px; }
+
+        main { flex-grow: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; }
+        canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+        #drop-zone { position: absolute; color: rgba(255,255,255,0.2); font-weight: 900; font-size: 30px; pointer-events: none; }
+        video { display: none; }
+    </style>
+</head>
+<body>
+
+<aside>
+    <div class="header"><h1>BLEIOBEE V3.7</h1></div>
+    
+    <div class="section-head">Optics & Rendering</div>
+    <div class="controls">
+        <div class="row"><span>Render Scale</span>
+            <select id="renderScale">
+                <option value="1">1:1 Native</option>
+                <option value="0.5" selected>1:2 Optimized</option>
+                <option value="0.25">1:4 Performance</option>
+            </select>
+        </div>
+        <div class="row"><span>Brightness</span><span class="val" id="v-br">100%</span></div>
+        <input type="range" id="brightness" min="0" max="300" value="100">
+        <div class="row"><span>Contrast</span><span class="val" id="v-ct">100%</span></div>
+        <input type="range" id="contrast" min="50" max="400" value="100">
+        <div class="row"><span>Blur/Denoise</span><span class="val" id="v-bl">0px</span></div>
+        <input type="range" id="blur" min="0" max="15" value="0">
+    </div>
+
+    <div class="section-head">Dual-Color Engine</div>
+    <div class="controls">
+        <div class="row"><span>Color Mode</span>
+            <select id="colorMode">
+                <option value="single">Dual-Color (Static)</option>
+                <option value="rainbow">Rainbow Cycle</option>
+                <option value="unique">ID Randomizer</option>
+            </select>
+        </div>
+        <div class="row"><span>Marker Color</span><input type="color" id="mColor" value="#d4af37"></div>
+        <div class="row"><span>Line Color</span><input type="color" id="lColor" value="#555555"></div>
+        <div class="row"><span>Glow Intensity</span><span class="val" id="v-gl">0</span></div>
+        <input type="range" id="glow" min="0" max="40" value="0">
+    </div>
+
+    <div class="section-head">Vector Path Settings</div>
+    <div class="controls">
+        <div class="row"><span>Trajectory</span>
+            <select id="pathMode">
+                <option value="dynamic">Smooth Follow</option>
+                <option value="arch">Static Arch</option>
+            </select>
+        </div>
+        <div class="row"><span>Line Style</span>
+            <select id="lineType">
+                <option value="solid">Solid Vector</option>
+                <option value="dotted">Dotted Path</option>
+                <option value="dashed">Dashed Data</option>
+            </select>
+        </div>
+        <div class="row"><span>Arch Width</span><span class="val" id="v-aw">1.0</span></div>
+        <input type="range" id="arcWidth" min="0.1" max="10" step="0.1" value="1.0">
+        <div class="row"><span>Line Weight</span><span class="val" id="v-lw">1.0</span></div>
+        <input type="range" id="lineWidth" min="0.5" max="20" step="0.5" value="1.0">
+        <div class="row"><span>Trace Length</span><span class="val" id="v-tl">40</span></div>
+        <input type="range" id="traceLen" min="5" max="300" value="40">
+    </div>
+
+    <div class="section-head">Marker Geometry</div>
+    <div class="controls">
+        <div class="row"><span>Shape</span>
+            <select id="shape">
+                <option value="dot">Solid Dot</option>
+                <option value="square">Filled Square</option>
+                <option value="diamond">Data Diamond</option>
+                <option value="plus" selected>Bold Plus (+)</option>
+                <option value="cross">Precision Cross (x)</option>
+                <option value="circle">Radius Circle</option>
+                <option value="box">Bounding Box</option>
+            </select>
+        </div>
+        <div class="row"><span>Marker Size</span><span class="val" id="v-ms">12</span></div>
+        <input type="range" id="markerSize" min="2" max="120" value="12">
+        <div class="row"><span>Size Randomizer</span><span class="val" id="v-rnd">0%</span></div>
+        <input type="range" id="sizeRandom" min="0" max="200" value="0">
+    </div>
+
+    <div class="section-head">Luma Tracking & Export</div>
+    <div class="controls">
+        <div class="row"><span>Threshold</span><span class="val" id="v-th">200</span></div>
+        <input type="range" id="threshold" min="0" max="255" value="200">
+        <div class="row"><span>Min Blob Area</span><span class="val" id="v-ma">50</span></div>
+        <input type="range" id="minArea" min="5" max="1000" value="50">
+        <div class="row"><span>Show IDs</span><input type="checkbox" id="drawTags" checked></div>
+        <div class="row"><span>Show Coords</span><input type="checkbox" id="drawCoords"></div>
+        <button id="recBtn" class="rec-btn" onclick="toggleRecord()">START CAPTURE (.WEBM)</button>
+        <button onclick="blobs = [];" style="margin-top:5px;">WIPE TRACKING DATA</button>
+    </div>
+</aside>
+
+<main>
+    <div id="drop-zone">BLEIOBEE READY FOR DATA</div>
+    <canvas id="canvas"></canvas>
+</main>
+<video id="video" loop muted></video>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const video = document.getElementById('video');
+    let blobs = [], nextID = 100, frameCount = 0;
+    let mediaRecorder, recordedChunks = [];
+
+    window.ondragover = (e) => e.preventDefault();
+    window.ondrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) { video.src = URL.createObjectURL(file); video.play(); document.getElementById('drop-zone').style.display='none'; }
+    };
+
+    function toggleRecord() {
+        const btn = document.getElementById('recBtn');
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            recordedChunks = [];
+            const stream = canvas.captureStream(60);
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'BLEIOBEE_V37_EXPORT.webm'; a.click();
+            };
+            mediaRecorder.start();
+            btn.innerText = "STOP & DOWNLOAD"; btn.style.color = "red";
+        } else {
+            mediaRecorder.stop();
+            btn.innerText = "START CAPTURE (.WEBM)"; btn.style.color = "gold";
+        }
+    }
+
+    function process() {
+        if (video.readyState < 2) return requestAnimationFrame(process);
+        const scale = parseFloat(document.getElementById('renderScale').value);
+        canvas.width = video.videoWidth * scale; canvas.height = video.videoHeight * scale;
+        frameCount++;
+
+        ctx.filter = `brightness(${document.getElementById('brightness').value}%) contrast(${document.getElementById('contrast').value}%) blur(${document.getElementById('blur').value}px)`;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.filter = 'none';
+
+        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = frame.data, thresh = parseInt(document.getElementById('threshold').value);
+        const visited = new Uint8Array(canvas.width * canvas.height), found = [], step = 8;
+
+        for (let i = 0; i < d.length; i += (4 * step)) {
+            let idx = i / 4;
+            if (!visited[idx] && (d[i] + d[i+1] + d[i+2])/3 > thresh) {
+                let stack = [idx]; visited[idx] = 1;
+                let bx1 = idx%canvas.width, by1 = Math.floor(idx/canvas.width), bx2 = bx1, by2 = by1;
+                let area = 0;
+                while(stack.length > 0) {
+                    let c = stack.pop(), cx = c % canvas.width, cy = Math.floor(c / canvas.width);
+                    bx1 = Math.min(bx1, cx); by1 = Math.min(by1, cy);
+                    bx2 = Math.max(bx2, cx); by2 = Math.max(by2, cy);
+                    area++;
+                    [c+step, c-step, c+canvas.width*step].forEach(n => {
+                        if (n >= 0 && n < visited.length && !visited[n] && (d[n*4]+d[n*4+1]+d[n*4+2])/3 > thresh) { visited[n] = 1; stack.push(n); }
+                    });
+                }
+                if (area > parseInt(document.getElementById('minArea').value)) found.push({ x: (bx1+bx2)/2, y: (by1+by2)/2, w: bx2-bx1, h: by2-by1 });
+            }
+        }
+
+        const colorMode = document.getElementById('colorMode').value;
+        const lineType = document.getElementById('lineType').value;
+        const pathMode = document.getElementById('pathMode').value;
+        const arcW = parseFloat(document.getElementById('arcWidth').value);
+        const lWeight = parseFloat(document.getElementById('lineWidth').value);
+        const mSize = parseInt(document.getElementById('markerSize').value);
+        const sizeRnd = parseInt(document.getElementById('sizeRandom').value);
+        const traceLen = parseInt(document.getElementById('traceLen').value);
+        const glow = parseInt(document.getElementById('glow').value);
+
+        found.forEach(f => {
+            let match = blobs.find(b => Math.hypot(b.x - f.x, b.y - f.y) < 60);
+            if (match) {
+                match.x = f.x; match.y = f.y; match.w = f.w; match.h = f.h;
+                match.history.push({x: f.x, y: f.y});
+                if (match.history.length > traceLen) match.history.shift();
+                match.dead = 0;
+            } else { blobs.push({ id: nextID++, x: f.x, y: f.y, w: f.w, h: f.h, history: [{x:f.x,y:f.y}], dead: 0, hue: Math.random()*360, rndSeed: Math.random() }); }
+        });
+
+        blobs = blobs.filter(b => b.dead++ < 5);
+
+        blobs.forEach(b => {
+            let mCol, lCol;
+            if(colorMode === 'rainbow') { mCol = lCol = `hsl(${(frameCount + b.hue)%360}, 100%, 50%)`; }
+            else if(colorMode === 'unique') { mCol = lCol = `hsl(${b.hue}, 100%, 50%)`; }
+            else { mCol = document.getElementById('mColor').value; lCol = document.getElementById('lColor').value; }
+
+            ctx.shadowBlur = glow; ctx.shadowColor = lCol;
+            ctx.strokeStyle = lCol; ctx.lineWidth = lWeight;
+
+            if (lineType === 'dotted') ctx.setLineDash([2, 5]);
+            else if (lineType === 'dashed') ctx.setLineDash([12, 10]);
+            else ctx.setLineDash([]);
+
+            if (b.history.length > 1) {
+                ctx.beginPath();
+                if (pathMode === 'arch') {
+                    ctx.moveTo(b.history[0].x, b.history[0].y);
+                    ctx.quadraticCurveTo(b.x - (150 * arcW), b.y - 100, b.x, b.y);
+                } else {
+                    ctx.moveTo(b.history[0].x, b.history[0].y);
+                    b.history.forEach(p => ctx.lineTo(p.x, p.y));
+                }
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = ctx.strokeStyle = mCol;
+            ctx.shadowColor = mCol;
+            const dynamicSize = mSize + (b.rndSeed * sizeRnd);
+            const s = dynamicSize/2;
+            const shp = document.getElementById('shape').value;
+            if (shp === 'dot') { ctx.beginPath(); ctx.arc(b.x, b.y, s, 0, 7); ctx.fill(); }
+            if (shp === 'square') ctx.fillRect(b.x-s, b.y-s, dynamicSize, dynamicSize);
+            if (shp === 'diamond') { ctx.beginPath(); ctx.moveTo(b.x, b.y-s); ctx.lineTo(b.x+s, b.y); ctx.lineTo(b.x, b.y+s); ctx.lineTo(b.x-s, b.y); ctx.closePath(); ctx.fill(); }
+            if (shp === 'plus') { ctx.fillRect(b.x-s, b.y-2, dynamicSize, 4); ctx.fillRect(b.x-2, b.y-s, 4, dynamicSize); }
+            if (shp === 'cross') { ctx.beginPath(); ctx.moveTo(b.x-s, b.y-s); ctx.lineTo(b.x+s, b.y+s); ctx.moveTo(b.x+s, b.y-s); ctx.lineTo(b.x-s, b.y+s); ctx.stroke(); }
+            if (shp === 'circle') { ctx.beginPath(); ctx.arc(b.x, b.y, s, 0, 7); ctx.stroke(); }
+            if (shp === 'box') ctx.strokeRect(b.x-b.w/2, b.y-b.h/2, b.w, b.h);
+
+            ctx.shadowBlur = 0; ctx.fillStyle = "#fff";
+            if(document.getElementById('drawTags').checked) ctx.fillText(`#${b.id}`, b.x+s+5, b.y);
+            if(document.getElementById('drawCoords').checked) ctx.fillText(`${Math.round(b.x)},${Math.round(b.y)}`, b.x+s+5, b.y+10);
+        });
+
+        // Label Syncing
+        document.getElementById('v-br').innerText = document.getElementById('brightness').value + '%';
+        document.getElementById('v-ct').innerText = document.getElementById('contrast').value + '%';
+        document.getElementById('v-bl').innerText = document.getElementById('blur').value + 'px';
+        document.getElementById('v-th').innerText = thresh;
+        document.getElementById('v-ma').innerText = document.getElementById('minArea').value;
+        document.getElementById('v-ms').innerText = mSize;
+        document.getElementById('v-rnd').innerText = sizeRnd + '%';
+        document.getElementById('v-lw').innerText = lWeight.toFixed(1);
+        document.getElementById('v-aw').innerText = arcW.toFixed(1);
+        document.getElementById('v-gl').innerText = glow;
+        document.getElementById('v-tl').innerText = traceLen;
+
+        requestAnimationFrame(process);
+    }
+    process();
+</script>
+</body>
+</html>
